@@ -1,8 +1,7 @@
 package com.statistic_service.service;
 
 import com.statistic_service.controller.request.DatePeriod;
-import com.statistic_service.persist.entity.TransactionPayments;
-import com.statistic_service.persist.repository.TransactionsPaymentsRepository;
+import com.statistic_service.elasticsearch.repository.TransactionPaymentsElasticRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,25 +15,29 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TransactionsStatisticService {
 
-    private final TransactionsPaymentsRepository repository;
+    private final TransactionPaymentsElasticRepository elasticRepository;
 
     public Map<String, Double> purchaseStatistic(final UUID userID, DatePeriod datePeriod) {
-        System.out.println(repository.transactionPaymentsByUserId(userID, datePeriod.getStartDate(), datePeriod.getEndDate()));
-        return repository.transactionPaymentsByUserId(userID, datePeriod.getStartDate(), datePeriod.getEndDate()).stream()
-                .filter(t -> t.getInternalTransfer().equals(false))
+        String startDate = datePeriod.getStartDate().toString().replaceAll("-", "");
+        String endDate = datePeriod.getEndDate().toString().replaceAll("-", "");
+
+        return elasticRepository.findAllByUserSourceId(userID, startDate, endDate).
+                stream().filter(t -> t.getInternalTransfer().equals(false))
                 .collect(Collectors.groupingBy(
-                        TransactionPayments::getCategory,
-                        Collectors.summingDouble(t -> t.getTotalSum().doubleValue()))
-                );
+                        com.statistic_service.elasticsearch.document.TransactionPayments::getCategory,
+                        Collectors.summingDouble(t -> t.getTotalSum().doubleValue())
+                ));
     }
 
     public Map<String, Double> transferStatistic(final UUID userID, DatePeriod datePeriod) {
-        System.out.println(repository.transactionPaymentsByUserId(userID, datePeriod.getStartDate(), datePeriod.getEndDate()));
-        return repository.transactionPaymentsByUserId(userID, datePeriod.getStartDate(), datePeriod.getEndDate()).stream()
-                .filter(t -> t.getInternalTransfer().equals(true))
+        String startDate = datePeriod.getStartDate().toString().replaceAll("-", "");
+        String endDate = datePeriod.getEndDate().toString().replaceAll("-", "");
+
+        return elasticRepository.findAllByUserSourceId(userID, startDate, endDate).
+                stream().filter(t -> t.getInternalTransfer().equals(true))
                 .collect(Collectors.groupingBy(
-                        TransactionPayments::getCategory,
-                        Collectors.summingDouble(t -> t.getTotalSum().doubleValue()))
-                );
+                        com.statistic_service.elasticsearch.document.TransactionPayments::getCategory,
+                        Collectors.summingDouble(t -> t.getTotalSum().doubleValue())
+                ));
     }
 }

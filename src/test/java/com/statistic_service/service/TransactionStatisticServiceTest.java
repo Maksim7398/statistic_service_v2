@@ -1,8 +1,8 @@
 package com.statistic_service.service;
 
 import com.statistic_service.controller.request.DatePeriod;
-import com.statistic_service.persist.entity.TransactionPayments;
-import com.statistic_service.persist.repository.TransactionsPaymentsRepository;
+import com.statistic_service.elasticsearch.document.TransactionPayments;
+import com.statistic_service.elasticsearch.repository.TransactionPaymentsElasticRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 public class TransactionStatisticServiceTest {
 
     @Mock
-    private TransactionsPaymentsRepository repository;
+    private TransactionPaymentsElasticRepository repository;
 
     @InjectMocks
     private TransactionsStatisticService underTest;
@@ -31,7 +31,6 @@ public class TransactionStatisticServiceTest {
     @Test
     public void purchaseStatisticsTest() {
         TransactionPayments transactionPayments = TransactionPayments.builder()
-                .id(UUID.randomUUID())
                 .category("products")
                 .accountIdDestination(UUID.randomUUID())
                 .accountIdSource(UUID.randomUUID())
@@ -43,7 +42,6 @@ public class TransactionStatisticServiceTest {
                 .internalTransfer(false)
                 .build();
         TransactionPayments transactionPayments2 = TransactionPayments.builder()
-                .id(UUID.randomUUID())
                 .category("products")
                 .accountIdDestination(UUID.randomUUID())
                 .accountIdSource(UUID.randomUUID())
@@ -55,7 +53,7 @@ public class TransactionStatisticServiceTest {
                 .internalTransfer(false)
                 .build();
 
-        when(repository.transactionPaymentsByUserId(any(), any(), any())).thenReturn(List.of(transactionPayments,transactionPayments2));
+        when(repository.findAllByUserSourceId(any(), any(), any())).thenReturn(List.of(transactionPayments, transactionPayments2));
 
         Map<String, Double> stringDoubleMap = underTest.purchaseStatistic(transactionPayments.getUserIdSource(),
                 DatePeriod.builder()
@@ -68,7 +66,6 @@ public class TransactionStatisticServiceTest {
     @Test
     public void transferStatisticsTest() {
         TransactionPayments transactionPayments = TransactionPayments.builder()
-                .id(UUID.randomUUID())
                 .category("ВНУТРИБАНКОВСКИЙ ПЕРЕВОД")
                 .accountIdDestination(UUID.randomUUID())
                 .accountIdSource(UUID.randomUUID())
@@ -80,7 +77,6 @@ public class TransactionStatisticServiceTest {
                 .internalTransfer(true)
                 .build();
         TransactionPayments transactionPayments2 = TransactionPayments.builder()
-                .id(UUID.randomUUID())
                 .category("ВНУТРИБАНКОВСКИЙ ПЕРЕВОД")
                 .accountIdDestination(UUID.randomUUID())
                 .accountIdSource(UUID.randomUUID())
@@ -92,7 +88,7 @@ public class TransactionStatisticServiceTest {
                 .internalTransfer(false)
                 .build();
 
-        when(repository.transactionPaymentsByUserId(any(), any(), any())).thenReturn(List.of(transactionPayments,transactionPayments2));
+        when(repository.findAllByUserSourceId(any(), any(), any())).thenReturn(List.of(transactionPayments, transactionPayments2));
 
         Map<String, Double> stringDoubleMap = underTest.purchaseStatistic(transactionPayments.getUserIdSource(),
                 DatePeriod.builder()
